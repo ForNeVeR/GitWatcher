@@ -24,20 +24,38 @@ $dir = 'C:\Temp\test-git-repo'
 
 $watcher = New-Object 'System.IO.FileSystemWatcher'
 $watcher.Path = $dir
+# TODO: Enable next line after adding .git filter.
+#$watcher.IncludeSubdirectories = $true
 
-$changed = Register-ObjectEvent $watcher "Changed" -Action {
-   write-host "Changed: $($eventArgs.FullPath)"
+$changed = Register-ObjectEvent $watcher 'Changed' -Action {
+    $path = $eventArgs.FullPath
+    & $git add $path
+    & $git commit -m "$([System.DateTime]::UtcNow): $path changed."
+    Write-Host "Changed: $path"
 }
-$created = Register-ObjectEvent $watcher "Created" -Action {
-   write-host "Created: $($eventArgs.FullPath)"
+
+$created = Register-ObjectEvent $watcher 'Created' -Action {
+    $path = $eventArgs.FullPath
+    & $git add $path
+    & $git commit -m "$([System.DateTime]::UtcNow): $path created."
+    Write-Host "Created: $path"
 }
-$deleted = Register-ObjectEvent $watcher "Deleted" -Action {
-   write-host "Deleted: $($eventArgs.FullPath)"
+
+$deleted = Register-ObjectEvent $watcher 'Deleted' -Action {
+    $path = $eventArgs.FullPath
+    & $git rm -rf $path
+    & $git commit -m "$([System.DateTime]::UtcNow): $oldPath removed."
+    Write-Host "Deleted: $path"
 }
-$renamed = Register-ObjectEvent $watcher "Renamed" -Action {
-   write-host "Renamed: $($eventArgs.FullPath)"
+
+$renamed = Register-ObjectEvent $watcher 'Renamed' -Action {
+    $oldPath = $eventArgs.OldFullPath
+    $path = $eventArgs.FullPath
+    & $git mv $oldPath $path
+    & $git commit -m "$([System.DateTime]::UtcNow): $oldPath renamed."
+    Write-Host "Renamed: $oldPath → $path"
 }
 
 $watcher.EnableRaisingEvents = $true
 
-[System.Threading.Thread]::Sleep(30000)
+# TODO: Unregister events some day.
