@@ -19,7 +19,7 @@
 # THE SOFTWARE.
 
 # Configuration:
-$global:git = 'git'
+$git = 'git'
 $dir = 'C:\Temp\test-git-repo'
 
 $watcher = New-Object 'System.IO.FileSystemWatcher'
@@ -28,37 +28,33 @@ $watcher.Path = $dir
 $watcher.IncludeSubdirectories = $false
 
 $changed = Register-ObjectEvent $watcher 'Changed' -Action {
-    try {
-        Write-Host "Git path: $git"
-        $path = $eventArgs.FullPath
-        & $global:git add $path
-        & $global:git commit -m "$([System.DateTime]::UtcNow): $path changed."
-        Write-Host "Changed: $path"
-    } catch {
-        Write-Host "Exception: $_"
-    }
+	Write-Host "Git path: $git"
+	$path = $eventArgs.FullPath
+	& $script:git add $path
+	& $script:git commit -m "$([System.DateTime]::UtcNow): $path changed."
+	Write-Host "Changed: $path"
 }
 
 $created = Register-ObjectEvent $watcher 'Created' -Action {
-    $path = $eventArgs.FullPath
-    & $global:git add $path
-    & $global:git commit -m "$([System.DateTime]::UtcNow): $path created."
-    Write-Host "Created: $path"
+	$path = $eventArgs.FullPath
+	& $script:git add $path
+	& $script:git commit -m "$([System.DateTime]::UtcNow): $path created."
+	Write-Host "Created: $path"
 }
 
 $deleted = Register-ObjectEvent $watcher 'Deleted' -Action {
-    $path = $eventArgs.FullPath
-    & $global:git rm -rf $path
-    & $global:git commit -m "$([System.DateTime]::UtcNow): $oldPath removed."
-    Write-Host "Deleted: $path"
+	$path = $eventArgs.FullPath
+	& $script:git rm -rf $path
+	& $script:git commit -m "$([System.DateTime]::UtcNow): $oldPath removed."
+	Write-Host "Deleted: $path"
 }
 
 $renamed = Register-ObjectEvent $watcher 'Renamed' -Action {
-    $oldPath = $eventArgs.OldFullPath
-    $path = $eventArgs.FullPath
-    & $global:git mv $oldPath $path
-    & $global:git commit -m "$([System.DateTime]::UtcNow): $oldPath renamed."
-    Write-Host "Renamed: $oldPath → $path"
+	$oldPath = $eventArgs.OldFullPath
+	$path = $eventArgs.FullPath
+	& $script:git mv $oldPath $path
+	& $script:git commit -m "$([System.DateTime]::UtcNow): $oldPath renamed."
+	Write-Host "Renamed: $oldPath → $path"
 }
 
 $watcher.EnableRaisingEvents = $true
