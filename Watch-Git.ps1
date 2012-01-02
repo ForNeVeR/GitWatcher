@@ -19,40 +19,45 @@
 # THE SOFTWARE.
 
 # Configuration:
-$git = git
+$global:git = 'git'
 $dir = 'C:\Temp\test-git-repo'
 
 $watcher = New-Object 'System.IO.FileSystemWatcher'
 $watcher.Path = $dir
 # TODO: Enable next line after adding .git filter.
-#$watcher.IncludeSubdirectories = $true
+$watcher.IncludeSubdirectories = $false
 
 $changed = Register-ObjectEvent $watcher 'Changed' -Action {
-    $path = $eventArgs.FullPath
-    & $git add $path
-    & $git commit -m "$([System.DateTime]::UtcNow): $path changed."
-    Write-Host "Changed: $path"
+    try {
+        Write-Host "Git path: $git"
+        $path = $eventArgs.FullPath
+        & $global:git add $path
+        & $global:git commit -m "$([System.DateTime]::UtcNow): $path changed."
+        Write-Host "Changed: $path"
+    } catch {
+        Write-Host "Exception: $_"
+    }
 }
 
 $created = Register-ObjectEvent $watcher 'Created' -Action {
     $path = $eventArgs.FullPath
-    & $git add $path
-    & $git commit -m "$([System.DateTime]::UtcNow): $path created."
+    & $global:git add $path
+    & $global:git commit -m "$([System.DateTime]::UtcNow): $path created."
     Write-Host "Created: $path"
 }
 
 $deleted = Register-ObjectEvent $watcher 'Deleted' -Action {
     $path = $eventArgs.FullPath
-    & $git rm -rf $path
-    & $git commit -m "$([System.DateTime]::UtcNow): $oldPath removed."
+    & $global:git rm -rf $path
+    & $global:git commit -m "$([System.DateTime]::UtcNow): $oldPath removed."
     Write-Host "Deleted: $path"
 }
 
 $renamed = Register-ObjectEvent $watcher 'Renamed' -Action {
     $oldPath = $eventArgs.OldFullPath
     $path = $eventArgs.FullPath
-    & $git mv $oldPath $path
-    & $git commit -m "$([System.DateTime]::UtcNow): $oldPath renamed."
+    & $global:git mv $oldPath $path
+    & $global:git commit -m "$([System.DateTime]::UtcNow): $oldPath renamed."
     Write-Host "Renamed: $oldPath → $path"
 }
 
