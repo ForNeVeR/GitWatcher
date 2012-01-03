@@ -34,16 +34,23 @@ repository.
 Prerequisites
 -------------
 
-You'll need a git command-line utility. For example, msysgit.
+You'll need a `git` command-line utility. For example, msysgit provides one.
 
 Usage
 -----
 
 1. Edit `Configuration` section of `Watch-Git.ps1` file.
 2. Run `Watch-Git.ps1`.
-3. Enjoy!
+
+Recommended way is to leave entire PowerShell process for exclusive script
+functioning (this recomendation of course may be removed in future; feel free to
+contact author if you have suggestions).
+
+Script will monitor any changes in the `$dir` directory (as reported by standard
+.NET `FileSystemWatcher`) and will call `git add` and `git commit` commands when
+on file changes.
 
 Project status
 --------------
 
-Currently project is unfinished. Consult project author before using.
+Project is ready for alpha-testing.

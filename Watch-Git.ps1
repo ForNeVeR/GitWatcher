@@ -19,42 +19,76 @@
 # THE SOFTWARE.
 
 # Configuration:
-$git = 'git'
-$dir = 'C:\Temp\test-git-repo'
+$global:gitwatch = @{
+	git = 'git'
+	dir = 'C:\Temp\test-git-repo'
+	debug = $true
+}
 
 $watcher = New-Object 'System.IO.FileSystemWatcher'
-$watcher.Path = $dir
-# TODO: Enable next line after adding .git filter.
-$watcher.IncludeSubdirectories = $false
+$watcher.Path = $global:gitwatch.dir
+$watcher.IncludeSubdirectories = $true
 
 $changed = Register-ObjectEvent $watcher 'Changed' -Action {
-	Write-Host "Git path: $git"
-	$path = $eventArgs.FullPath
-	& $script:git add $path
-	& $script:git commit -m "$([System.DateTime]::UtcNow): $path changed."
-	Write-Host "Changed: $path"
+	try {
+		$path = $eventArgs.FullPath
+		if (-not $path.Contains('.git')) {
+			& $global:gitwatch.git add $path
+			& $global:gitwatch.git commit -m "$([System.DateTime]::UtcNow): $path changed."
+			if ($global:gitwatch.debug) {
+				Write-Host "Changed: $path"
+			}
+		}
+	} catch {
+		Write-Host "Exception: $_"
+	}
 }
 
 $created = Register-ObjectEvent $watcher 'Created' -Action {
-	$path = $eventArgs.FullPath
-	& $script:git add $path
-	& $script:git commit -m "$([System.DateTime]::UtcNow): $path created."
-	Write-Host "Created: $path"
+	try {
+		$path = $eventArgs.FullPath
+		if (-not $path.Contains("\.git")) {
+			& $global:gitwatch.git add $path
+			& $global:gitwatch.git commit -m "$([System.DateTime]::UtcNow): $path created."
+			if ($global:gitwatch.debug) {
+				Write-Host "Created: $path"
+			}
+		}
+	} catch {
+		Write-Host "Exception: $_"
+	}
 }
 
 $deleted = Register-ObjectEvent $watcher 'Deleted' -Action {
-	$path = $eventArgs.FullPath
-	& $script:git rm -rf $path
-	& $script:git commit -m "$([System.DateTime]::UtcNow): $oldPath removed."
-	Write-Host "Deleted: $path"
+	try {
+		$path = $eventArgs.FullPath
+		if (-not $path.Contains('.git')) {
+			& $global:gitwatch.git rm -rf $path
+			& $global:gitwatch.git commit -m "$([System.DateTime]::UtcNow): $oldPath removed."
+			if ($global:gitwatch.debug) {
+				Write-Host "Deleted: $path"
+			}
+		}
+	} catch {
+		Write-Host "Exception: $_"
+	}
 }
 
 $renamed = Register-ObjectEvent $watcher 'Renamed' -Action {
-	$oldPath = $eventArgs.OldFullPath
-	$path = $eventArgs.FullPath
-	& $script:git mv $oldPath $path
-	& $script:git commit -m "$([System.DateTime]::UtcNow): $oldPath renamed."
-	Write-Host "Renamed: $oldPath → $path"
+	try {
+		$oldPath = $eventArgs.OldFullPath
+		$path = $eventArgs.FullPath
+		# TODO: Check whether file was moved from or inside to repository.
+		if (-not $path.Contains('.git')) { 
+			& $global:gitwatch.git mv $oldPath $path
+			& $global:gitwatch.git commit -m "$([System.DateTime]::UtcNow): $oldPath renamed."
+			if ($global:gitwatch.debug) {
+				Write-Host "Renamed: $oldPath → $path"
+			}
+		}
+	} catch {
+		Write-Host "Exception: $_"
+	}
 }
 
 $watcher.EnableRaisingEvents = $true
